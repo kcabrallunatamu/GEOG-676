@@ -1,1 +1,22 @@
+**PART ONE** 
+product = 1
+for num in part1:
+    product *= num
+print(product)
+
+
+**PART TWO**
+total = 0
+for num in part2:
+    total += num
+print(total)
+
+
+**PART THREE** 
+even_total = 0
+for num in part3:
+    if num % 2 == 0:
+        even_total += num
+print(even_total)
+
 
