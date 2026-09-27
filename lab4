@@ -1,1 +1,99 @@
+import arcpy
+import os
 
+# USER INPUTS — update these paths for your environment
+# ---------------------------------------------------------
+
+project_folder = r"C:\Users\kblp1\OneDrive\Documents\ArcGIS\Projects\GEOG676_LAB4\GEOG676_LAB4.gdb" 
+csv_path = os.path.join(project_folder, "garages.csv")
+gdb_path = os.path.join(project_folder, "GARAGEANALYSIS.gdb")
+buildings_fc = r"C:\Users\kblp1\OneDrive\Desktop\TAMU\GEOG676\LAB4\Campus.gdb\Structures"  
+
+# Buffer distance 
+buffer_distance = "10 meters"
+
+# 1. Create a File Geodatabase
+# ---------------------------------------------------------
+
+if not arcpy.Exists(gdb_path):
+    arcpy.CreateFileGDB_management(project_folder, "GARAGEANALYSIS.gdb")
+    print("Created geodatabase:", gdb_path)
+else:
+    print("Geodatabase already exists:", gdb_path)
+
+
+# 2. Convert CSV to XY Event Layer
+# ---------------------------------------------------------
+
+xy_layer = "garages_XYTabletoPoint"
+
+arcpy.MakeXYEventLayer_management(
+    csv_path,
+    "X", "Y",
+    xy_layer,
+    arcpy.SpatialReference(4326)   # WGS84
+)
+
+print("Created XY event layer from CSV.")
+
+# Save XY layer into the geodatabase
+garages_fc = os.path.join(gdb_path, "garages_XYTabletoPoint")
+arcpy.FeatureClassToFeatureClass_conversion(xy_layer, gdb_path, "garages_XYTabletoPoint")
+
+print("Saved garage points to geodatabase:", garages_fc)
+
+
+# 3. Copy Buildings layer into the geodatabase
+# ---------------------------------------------------------
+
+buildings_in_gdb = os.path.join(gdb_path, "Structures")
+
+if not arcpy.Exists(buildings_in_gdb):
+    arcpy.FeatureClassToFeatureClass_conversion(buildings_fc, gdb_path, "Structures")
+    print("Copied buildings layer into geodatabase.")
+else:
+    print("Buildings layer already exists in geodatabase.")
+
+
+# 4. Buffer the garage points
+# ---------------------------------------------------------
+
+buffer_output = os.path.join(gdb_path, "Garage_Buffer")
+
+arcpy.Buffer_analysis(
+    garages_fc,
+    buffer_output,
+    buffer_distance,
+    dissolve_option="NONE"
+)
+
+print("Created buffer:", buffer_output)
+
+# 5. Intersect buildings with garage buffers
+# ---------------------------------------------------------
+
+intersect_output = os.path.join(gdb_path, "Garage_Structures_Intersect")
+
+arcpy.Intersect_analysis(
+    [buffer_output, buildings_in_gdb],
+    intersect_output
+)
+
+print("Created intersect output:", intersect_output)
+
+
+# 6. Export intersect results to CSV
+# ---------------------------------------------------------
+
+csv_output = os.path.join(project_folder, "Garage_Structures_intersect.csv")
+
+arcpy.TableToTable_conversion(
+    intersect_output,
+    project_folder,
+    "Garage_Structures_intersect.csv""
+)
+
+print("Exported intersect results to CSV:", csv_output)
+
+# ---------------------------------------------------------
+print("Workflow complete.")
