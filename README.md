@@ -11,6 +11,8 @@
 
 [lab5](lab5)
 
+[lab5redo](lab5redo)
+
 [lab6](lab6) 
 
 [lab7](lab7)
